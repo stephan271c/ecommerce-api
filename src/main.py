@@ -11,7 +11,7 @@ Production-ready RESTful API with:
 
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -112,10 +112,10 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Include API routers
 app.include_router(health_router)
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(listings.router)
-app.include_router(external.router)
+app.include_router(auth.router, dependencies=[Depends(rate_limit_dependency)])
+app.include_router(users.router, dependencies=[Depends(rate_limit_dependency)])
+app.include_router(listings.router, dependencies=[Depends(rate_limit_dependency)])
+app.include_router(external.router, dependencies=[Depends(rate_limit_dependency)])
 
 # Include frontend router (must be last to avoid route conflicts)
 app.include_router(frontend.router)

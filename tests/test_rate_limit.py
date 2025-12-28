@@ -37,6 +37,32 @@ class TestRateLimiting:
         # Remaining should decrease
         assert remaining2 < remaining1
 
+    def test_rate_limit_exceeded(self, client):
+        """Test that 429 is returned when rate limit is exceeded."""
+        from src.services.rate_limit import _memory_storage
+        
+        # Force memory storage and clear it
+        with patch('src.services.rate_limit.get_redis_client', return_value=None):
+            _memory_storage.clear()
+            
+            # Set a low limit for testing
+            with patch('src.services.rate_limit.settings.RATE_LIMIT_REQUESTS', 2):
+                # Request 1: Allowed
+                response1 = client.get("/v1/rate-limited")
+                assert response1.status_code == 200
+                
+                # Request 2: Allowed (limit reached)
+                response2 = client.get("/v1/rate-limited")
+                assert response2.status_code == 200
+                
+                # Request 3: Blocked
+                response3 = client.get("/v1/rate-limited")
+                assert response3.status_code == 429
+                
+                data = response3.json()
+                assert data["error_code"] == "RATE_LIMIT_EXCEEDED"
+                assert "retry_after" in data["details"]
+
 
 class TestRateLimitFunctions:
     """Tests for rate limit utility functions."""
