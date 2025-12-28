@@ -1,0 +1,455 @@
+{
+	"info": {
+		"_postman_id": "ecommerce-api-collection",
+		"name": "E-Commerce API",
+		"description": "Production-ready E-Commerce API with JWT authentication, rate limiting, and health checks.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Basic health check endpoint for load balancer integration."
+					}
+				},
+				{
+					"name": "Detailed Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/detailed",
+							"host": ["{{base_url}}"],
+							"path": ["health", "detailed"]
+						},
+						"description": "Detailed health check showing database and Redis status."
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('user_id', jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"SecurePass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "register"]
+						},
+						"description": "Register a new user account. Password must be at least 8 characters with uppercase, lowercase, and digit."
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "testuser",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "SecurePass123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "auth", "login"]
+						},
+						"description": "Login with username and password. Returns JWT access token."
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/users/me",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "me"]
+						},
+						"description": "Get the currently authenticated user's profile."
+					}
+				},
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/users?skip=0&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get paginated list of users. Requires authentication."
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "1"]
+						},
+						"description": "Get a specific user by ID."
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"updateduser\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "1"]
+						},
+						"description": "Update user profile. Users can only update their own profile, admins can update any."
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "users", "1"]
+						},
+						"description": "Delete a user account. Users can only delete their own account."
+					}
+				}
+			]
+		},
+		{
+			"name": "Listings",
+			"item": [
+				{
+					"name": "Create Listing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Sample Product\",\n    \"description\": \"A great product for testing\",\n    \"price\": 99.99,\n    \"quantity\": 10,\n    \"category\": \"electronics\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/listings",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings"]
+						},
+						"description": "Create a new product listing. Requires authentication."
+					}
+				},
+				{
+					"name": "List Listings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/listings?skip=0&limit=10&sort_by=created_at&sort_order=desc",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "sort_by",
+									"value": "created_at"
+								},
+								{
+									"key": "sort_order",
+									"value": "desc"
+								}
+							]
+						},
+						"description": "Get paginated list of listings. Public endpoint with filtering and sorting."
+					}
+				},
+				{
+					"name": "List Listings (Filtered)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/listings?category=electronics&min_price=50&max_price=200",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings"],
+							"query": [
+								{
+									"key": "category",
+									"value": "electronics"
+								},
+								{
+									"key": "min_price",
+									"value": "50"
+								},
+								{
+									"key": "max_price",
+									"value": "200"
+								}
+							]
+						},
+						"description": "Get listings with category and price filters."
+					}
+				},
+				{
+					"name": "Get Listing by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/listings/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings", "1"]
+						},
+						"description": "Get a specific listing by ID. Results are cached."
+					}
+				},
+				{
+					"name": "Update Listing",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Product Title\",\n    \"price\": 149.99\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/v1/listings/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings", "1"]
+						},
+						"description": "Update a listing. Only owner or admin can update."
+					}
+				},
+				{
+					"name": "Delete Listing",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/v1/listings/1",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "listings", "1"]
+						},
+						"description": "Delete a listing. Only owner or admin can delete."
+					}
+				}
+			]
+		},
+		{
+			"name": "External API",
+			"item": [
+				{
+					"name": "Get Random User (Async)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/external/random-user",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "external", "random-user"]
+						},
+						"description": "Demonstrates async HTTP call using httpx. Fetches random user from external API."
+					}
+				},
+				{
+					"name": "Start Background Task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/external/background-task?data=sample_data",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "external", "background-task"],
+							"query": [
+								{
+									"key": "data",
+									"value": "sample_data"
+								}
+							]
+						},
+						"description": "Demonstrates FastAPI background tasks. Starts processing in background and returns immediately."
+					}
+				}
+			]
+		},
+		{
+			"name": "Rate Limiting",
+			"item": [
+				{
+					"name": "Rate Limited Endpoint",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/v1/rate-limited",
+							"host": ["{{base_url}}"],
+							"path": ["v1", "rate-limited"]
+						},
+						"description": "Example rate-limited endpoint. Returns rate limit info including remaining requests. Hit repeatedly to see 429 response."
+					}
+				}
+			]
+		}
+	]
+}
