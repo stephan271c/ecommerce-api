@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 import jwt
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -24,7 +24,8 @@ from ..core.exceptions import UnauthorizedError, ForbiddenError
 settings = get_settings()
 
 # OAuth2 scheme for bearer token extraction
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
+# auto_error=False allows cookie-based auth to work when no Bearer token is provided
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login", auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -104,13 +105,19 @@ def decode_token(token: str) -> TokenData:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> User:
     """
     FastAPI dependency to get the current authenticated user.
     
+    Supports both:
+    - Bearer token in Authorization header (for API clients)
+    - HttpOnly cookie (for browser clients)
+    
     Args:
+        request: The incoming request (for cookie access)
         token: JWT token from Authorization header
         db: Database session
         
@@ -120,7 +127,17 @@ async def get_current_user(
     Raises:
         UnauthorizedError: If authentication fails
     """
-    token_data = decode_token(token)
+    # Try cookie first if no Bearer token provided
+    auth_token = token
+    if not auth_token or auth_token == "":
+        cookie_token = request.cookies.get("access_token")
+        if cookie_token:
+            auth_token = cookie_token
+    
+    if not auth_token:
+        raise UnauthorizedError("Not authenticated")
+    
+    token_data = decode_token(auth_token)
     user = db.query(User).filter(User.id == token_data.user_id).first()
     
     if user is None:

@@ -4,32 +4,32 @@
 
 {% block content %}
 <div id="profile-content">
-  <div class="text-center" style="padding: 3rem;">
-    <div class="spinner" style="margin: 0 auto;"></div>
-    <p class="mt-1 text-muted">Loading profile...</p>
-  </div>
+    <div class="text-center" style="padding: 3rem;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+        <p class="mt-1 text-muted">Loading profile...</p>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    if (!TokenManager.isAuthenticated()) {
-      showFlash('Please login to view your profile', 'warning');
-      setTimeout(() => window.location.href = '/login', 1500);
-      return;
-    }
-    loadProfile();
-  });
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!TokenManager.isAuthenticated()) {
+            showFlash('Please login to view your profile', 'warning');
+            setTimeout(() => window.location.href = '/login', 1500);
+            return;
+        }
+        loadProfile();
+    });
 
-  async function loadProfile() {
-    const container = document.getElementById('profile-content');
+    async function loadProfile() {
+        const container = document.getElementById('profile-content');
 
-    try {
-      const user = await API.get('/v1/users/me');
-      TokenManager.setUser(user); // Update stored user data
+        try {
+            const user = await API.get('/v1/users/me');
+            TokenManager.setUser(user); // Update stored user data
 
-      container.innerHTML = `
+            container.innerHTML = `
             <div class="profile-header">
                 <div class="profile-avatar">${user.username.charAt(0).toUpperCase()}</div>
                 <div class="profile-info">
@@ -73,7 +73,7 @@
                 
                 <div class="card">
                     <h3>Update Profile</h3>
-                    <form onsubmit="handleUpdateProfile(event)" data-user-id="${user.id}">
+                    <form id="profile-form" data-user-id="${user.id}">
                         <div class="form-group">
                             <label class="form-label" for="username">Username</label>
                             <input 
@@ -117,32 +117,32 @@
             </div>
         `;
 
-      // Load user's listings
-      loadMyListings(user.id);
+            // Load user's listings
+            loadMyListings(user.id);
 
-    } catch (error) {
-      container.innerHTML = `
+        } catch (error) {
+            container.innerHTML = `
             <div class="alert alert-error">
                 Failed to load profile. Please try again.
             </div>
         `;
+        }
     }
-  }
 
-  async function loadMyListings(userId) {
-    const container = document.getElementById('my-listings');
+    async function loadMyListings(userId) {
+        const container = document.getElementById('my-listings');
 
-    try {
-      const data = await API.get(`/v1/listings?seller_id=${userId}&limit=10`);
+        try {
+            const data = await API.get(`/v1/listings?seller_id=${userId}&limit=10`);
 
-      if (data.items.length === 0) {
-        container.innerHTML = `
+            if (data.items.length === 0) {
+                container.innerHTML = `
                 <p class="text-muted text-center">You haven't created any listings yet.</p>
             `;
-        return;
-      }
+                return;
+            }
 
-      container.innerHTML = `
+            container.innerHTML = `
             <div class="table-wrapper">
                 <table class="table">
                     <thead>
@@ -172,24 +172,24 @@
             ${data.total > 10 ? `<p class="text-muted text-center mt-1">Showing 10 of ${data.total} listings</p>` : ''}
         `;
 
-    } catch (error) {
-      container.innerHTML = `<p class="text-error">Failed to load listings</p>`;
+        } catch (error) {
+            container.innerHTML = `<p class="text-error">Failed to load listings</p>`;
+        }
     }
-  }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-  function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
+    function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
 </script>
 {% endblock %}

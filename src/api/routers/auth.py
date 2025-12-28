@@ -2,7 +2,7 @@
 Authentication router with registration and login endpoints.
 """
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
@@ -68,13 +68,15 @@ async def register(
     summary="Login to get access token"
 )
 async def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     """
     Authenticate user and return JWT access token.
     
-    Use the returned token in the Authorization header:
+    The token is also set as an HttpOnly cookie for browser clients.
+    Use the returned token in the Authorization header for API clients:
     `Authorization: Bearer <token>`
     """
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -93,4 +95,33 @@ async def login(
         }
     )
     
+    # Set HttpOnly cookie for browser clients
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,  # Set to True in production with HTTPS
+        max_age=60 * 60 * 24  # 24 hours
+    )
+    
     return Token(access_token=access_token)
+
+
+@router.post(
+    "/logout",
+    summary="Logout and clear authentication cookie"
+)
+async def logout(response: Response):
+    """
+    Clear the authentication cookie.
+    
+    For API clients using Bearer tokens, simply discard the token client-side.
+    """
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite="lax"
+    )
+    
+    return {"message": "Successfully logged out"}

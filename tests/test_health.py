@@ -34,11 +34,9 @@ class TestRoot:
     """Tests for root endpoint."""
 
     def test_root_endpoint(self, client):
-        """Test root endpoint."""
+        """Test root endpoint returns the home page."""
         response = client.get("/")
         
         assert response.status_code == 200
-        data = response.json()
-        assert "name" in data
-        assert "version" in data
-        assert "docs" in data
+        # Root now serves HTML (Jinja2 frontend home page)
+        assert "text/html" in response.headers.get("content-type", "")

@@ -11,8 +11,8 @@
       <h2 class="card-title">{% if listing_id %}Edit Listing{% else %}Create New Listing{% endif %}</h2>
     </div>
 
-    <form id="listing-form"
-      onsubmit="{% if listing_id %}handleUpdateListing(event, {{ listing_id }}){% else %}handleCreateListing(event){% endif %}">
+    <form id="{% if listing_id %}update-listing-form{% else %}create-listing-form{% endif %}" {% if listing_id %}
+      data-listing-id="{{ listing_id }}" {% endif %}>
       <div class="form-group">
         <label class="form-label" for="title">Title *</label>
         <input type="text" id="title" name="title" class="form-control" placeholder="Product title" required

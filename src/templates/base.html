@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}E-Commerce{% endblock %} | ShopAPI</title>
     <meta name="description" content="{% block description %}A modern e-commerce platform{% endblock %}">
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Styles -->
     <link rel="stylesheet" href="/static/css/style.css">
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <div class="page-wrapper">
         <!-- Navigation -->
         <nav class="navbar">
             <div class="container">
                 <a href="/" class="navbar-brand">🛒 ShopAPI</a>
-                
+
                 <ul class="navbar-nav">
                     <li><a href="/" class="{% if active_page == 'home' %}active{% endif %}">Home</a></li>
-                    <li><a href="/listings" class="{% if active_page == 'listings' %}active{% endif %}">Listings</a></li>
+                    <li><a href="/listings" class="{% if active_page == 'listings' %}active{% endif %}">Listings</a>
+                    </li>
                     <li><a href="/docs" target="_blank">API Docs</a></li>
                 </ul>
-                
+
                 <div class="navbar-auth">
                     <!-- Will be updated by JavaScript based on auth state -->
                     <a href="/login" class="btn btn-secondary btn-sm">Login</a>
@@ -35,7 +38,7 @@
                 </div>
             </div>
         </nav>
-        
+
         <!-- Flash Messages -->
         {% if messages %}
         <div class="container" style="margin-top: 1rem;">
@@ -46,24 +49,26 @@
             {% endfor %}
         </div>
         {% endif %}
-        
+
         <!-- Main Content -->
         <main class="main-content">
             <div class="container">
                 {% block content %}{% endblock %}
             </div>
         </main>
-        
+
         <!-- Footer -->
-        <footer style="text-align: center; padding: 2rem 0; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1);">
+        <footer
+            style="text-align: center; padding: 2rem 0; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1);">
             <div class="container">
-                <p>&copy; 2024 ShopAPI. Built with FastAPI + Jinja2</p>
+                <p>&copy; 2026 ShopAPI. Built with FastAPI + Jinja2</p>
             </div>
         </footer>
     </div>
-    
+
     <!-- Scripts -->
     <script src="/static/js/main.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
