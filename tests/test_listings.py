@@ -156,7 +156,7 @@ class TestUpdateListing:
 
 
 class TestDeleteListing:
-    """Tests for deleting listings."""
+    """Tests from src.models.models import Listings."""
 
     def test_delete_own_listing(self, client, test_user, test_listing, auth_header):
         """Test deleting own listing."""

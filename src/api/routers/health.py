@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import redis
 
-from .database import get_db
-from .config import get_settings
-from .schemas import HealthCheck, DetailedHealthCheck
+from ...core.database import get_db
+from ...core.config import get_settings
+from ...schemas.schemas import HealthCheck, DetailedHealthCheck
 
 router = APIRouter(tags=["Health"])
 settings = get_settings()

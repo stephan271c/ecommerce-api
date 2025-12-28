@@ -12,12 +12,12 @@ class TestCacheFunctions:
 
     def test_set_and_get_memory_cache(self):
         """Test setting and getting from memory cache."""
-        from src.cache import set_cache, get_cache, _memory_cache
+        from src.services.cache import set_cache, get_cache, _memory_cache
         
         # Clear memory cache
         _memory_cache.clear()
         
-        with patch('src.cache.get_redis_client', return_value=None):
+        with patch('src.services.cache.get_redis_client', return_value=None):
             # Set value
             result = set_cache("test_key", {"value": 123}, ttl_seconds=60)
             assert result is True
@@ -28,12 +28,12 @@ class TestCacheFunctions:
 
     def test_cache_expiration(self):
         """Test that cache entries expire."""
-        from src.cache import set_cache, get_cache, _memory_cache
+        from src.services.cache import set_cache, get_cache, _memory_cache
         
         # Clear memory cache
         _memory_cache.clear()
         
-        with patch('src.cache.get_redis_client', return_value=None):
+        with patch('src.services.cache.get_redis_client', return_value=None):
             # Set value with very short TTL
             set_cache("expire_test", {"data": "test"}, ttl_seconds=1)
             
@@ -51,12 +51,12 @@ class TestCacheFunctions:
 
     def test_invalidate_cache(self):
         """Test cache invalidation."""
-        from src.cache import set_cache, get_cache, invalidate_cache, _memory_cache
-        
+        from src.services.cache import get_cache, set_cache, invalidate_cache, cached, _memory_cache
+        from src.core.config import get_settings
         # Clear memory cache
         _memory_cache.clear()
         
-        with patch('src.cache.get_redis_client', return_value=None):
+        with patch('src.services.cache.get_redis_client', return_value=None):
             # Set multiple values
             set_cache("listing:1", {"id": 1}, ttl_seconds=60)
             set_cache("listing:2", {"id": 2}, ttl_seconds=60)
@@ -74,11 +74,11 @@ class TestCacheFunctions:
 
     def test_get_cache_returns_none_for_missing(self):
         """Test that get_cache returns None for missing keys."""
-        from src.cache import get_cache, _memory_cache
+        from src.services.cache import get_cache, _memory_cache
         
         _memory_cache.clear()
         
-        with patch('src.cache.get_redis_client', return_value=None):
+        with patch('src.services.cache.get_redis_client', return_value=None):
             result = get_cache("nonexistent_key")
             assert result is None
 
@@ -89,7 +89,7 @@ class TestCacheDecorator:
     @pytest.mark.asyncio
     async def test_cached_decorator(self):
         """Test the cached decorator caches function results."""
-        from src.cache import cached, _memory_cache
+        from src.services.cache import cached, _memory_cache
         
         _memory_cache.clear()
         call_count = 0
@@ -100,7 +100,7 @@ class TestCacheDecorator:
             call_count += 1
             return {"result": param}
         
-        with patch('src.cache.get_redis_client', return_value=None):
+        with patch('src.services.cache.get_redis_client', return_value=None):
             # First call should execute function
             result1 = await expensive_function(param="value1")
             assert call_count == 1

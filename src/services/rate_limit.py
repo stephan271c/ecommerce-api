@@ -11,8 +11,8 @@ from collections import defaultdict
 from fastapi import Request, Response, Depends
 import redis
 
-from .config import get_settings
-from .exceptions import RateLimitError
+from ..core.config import get_settings
+from ..core.exceptions import RateLimitError
 
 settings = get_settings()
 

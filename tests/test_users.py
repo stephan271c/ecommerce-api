@@ -109,7 +109,7 @@ class TestUpdateUser:
 
 
 class TestDeleteUser:
-    """Tests for deleting users."""
+    """Tests from src.models.models import Users."""
 
     def test_delete_own_account(self, client, test_user, auth_header):
         """Test deleting own account."""

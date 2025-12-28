@@ -6,11 +6,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..models import User
-from ..schemas import UserResponse, UserUpdate, UserList, Message
-from ..auth import get_current_user, get_current_admin, get_password_hash
-from ..exceptions import NotFoundError, ForbiddenError, ConflictError
+from ...core.database import get_db
+from ...models.models import User
+from ...schemas.schemas import UserResponse, UserUpdate, UserList, Message
+from ...services.auth import get_current_user, get_current_admin, get_password_hash
+from ...core.exceptions import NotFoundError, ForbiddenError, ConflictError
 
 router = APIRouter(prefix="/v1/users", tags=["Users"])
 

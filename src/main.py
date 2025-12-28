@@ -14,15 +14,15 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .config import get_settings
-from .database import init_db
-from .middleware import RequestIDMiddleware, LoggingMiddleware
-from .rate_limit import rate_limit_dependency, add_rate_limit_headers
-from .exceptions import APIException
+from .core.config import get_settings
+from .core.database import init_db
+from .middleware.middleware import RequestIDMiddleware, LoggingMiddleware
+from .services.rate_limit import rate_limit_dependency, add_rate_limit_headers
+from .core.exceptions import APIException
 
 # Import routers
-from .routers import auth, users, listings, external
-from .health import router as health_router
+from .api.routers import auth, users, listings, external
+from .api.routers.health import router as health_router
 
 settings = get_settings()
 
@@ -136,7 +136,7 @@ async def rate_limited_endpoint(
     Rate limit headers are included in the response.
     """
     # For demonstration, manually check rate limit
-    from .rate_limit import sliding_window_rate_limit, get_client_identifier
+    from .services.rate_limit import sliding_window_rate_limit, get_client_identifier
     
     client_id = get_client_identifier(request)
     is_allowed, remaining, limit, reset_time = sliding_window_rate_limit(client_id)
@@ -151,7 +151,7 @@ async def rate_limited_endpoint(
     }
     
     if not is_allowed:
-        from .exceptions import RateLimitError
+        from .core.exceptions import RateLimitError
         raise RateLimitError(retry_after=reset_time - int(__import__('time').time()))
     
     return response_data

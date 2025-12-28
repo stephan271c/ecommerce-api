@@ -8,10 +8,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database import Base, get_db
+from src.core.database import Base, get_db
 from src.main import app
-from src.auth import get_password_hash, create_access_token
-from src.models import User, Listing
+from src.core.config import get_settings
+from src.services.auth import create_access_token, get_password_hash
+from src.models.models import User, Listing
 
 
 # Use file-based SQLite for tests - ensures data is shared across sessions

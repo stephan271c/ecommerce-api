@@ -11,7 +11,7 @@ from typing import Optional, Any, Callable
 from functools import wraps
 import redis
 
-from .config import get_settings
+from ..core.config import get_settings
 
 settings = get_settings()
 

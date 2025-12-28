@@ -43,7 +43,7 @@ class TestRateLimitFunctions:
 
     def test_get_client_identifier_with_forwarded_for(self):
         """Test client identifier extraction from X-Forwarded-For header."""
-        from src.rate_limit import get_client_identifier
+        from src.services.rate_limit import get_client_identifier
         
         mock_request = MagicMock()
         mock_request.headers.get.return_value = "203.0.113.195, 70.41.3.18"
@@ -54,7 +54,7 @@ class TestRateLimitFunctions:
 
     def test_get_client_identifier_without_forwarded_for(self):
         """Test client identifier extraction from direct client."""
-        from src.rate_limit import get_client_identifier
+        from src.services.rate_limit import get_client_identifier
         
         mock_request = MagicMock()
         mock_request.headers.get.return_value = None
@@ -65,7 +65,7 @@ class TestRateLimitFunctions:
 
     def test_memory_rate_limit_allows_under_limit(self):
         """Test in-memory rate limiting allows requests under limit."""
-        from src.rate_limit import _memory_rate_limit, _memory_storage
+        from src.services.rate_limit import _memory_rate_limit, _memory_storage
         
         # Clear memory storage
         _memory_storage.clear()
@@ -83,7 +83,7 @@ class TestRateLimitFunctions:
 
     def test_memory_rate_limit_blocks_over_limit(self):
         """Test in-memory rate limiting blocks requests over limit."""
-        from src.rate_limit import _memory_rate_limit, _memory_storage
+        from src.services.rate_limit import _memory_rate_limit, _memory_storage
         
         # Clear and fill up memory storage
         _memory_storage.clear()
@@ -102,12 +102,18 @@ class TestRateLimitFunctions:
 
     def test_sliding_window_rate_limit_without_redis(self):
         """Test sliding window falls back to memory when Redis unavailable."""
-        from src.rate_limit import sliding_window_rate_limit, _memory_storage
-        
+        from src.services.rate_limit import (
+            sliding_window_rate_limit, 
+            get_client_identifier,
+            _memory_storage,
+            _memory_rate_limit
+        )
+        from src.core.exceptions import RateLimitError
+
         # Clear memory storage
         _memory_storage.clear()
         
-        with patch('src.rate_limit.get_redis_client', return_value=None):
+        with patch('src.services.rate_limit.get_redis_client', return_value=None):
             is_allowed, remaining, limit, reset_time = sliding_window_rate_limit(
                 client_id="memory_fallback_test",
                 limit=100,
@@ -124,7 +130,7 @@ class TestRateLimitError:
 
     def test_rate_limit_error_format(self):
         """Test RateLimitError produces correct error format."""
-        from src.exceptions import RateLimitError
+        from src.core.exceptions import RateLimitError
         
         error = RateLimitError(retry_after=30)
         

@@ -3,6 +3,8 @@ Tests for health check endpoints.
 """
 
 import pytest
+from src.schemas.schemas import HealthCheck
+from src.schemas.schemas import HealthCheck
 
 
 class TestHealthCheck:

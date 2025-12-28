@@ -15,11 +15,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from .config import get_settings
-from .database import get_db
-from .models import User
-from .schemas import TokenData
-from .exceptions import UnauthorizedError, ForbiddenError
+from ..core.config import get_settings
+from ..core.database import get_db
+from ..models.models import User
+from ..schemas.schemas import TokenData
+from ..core.exceptions import UnauthorizedError, ForbiddenError
 
 settings = get_settings()
 

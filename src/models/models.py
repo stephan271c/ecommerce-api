@@ -14,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 import enum
 
-from .database import Base
+from ..core.database import Base
 
 
 class UserRole(str, enum.Enum):

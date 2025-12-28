@@ -101,21 +101,28 @@ uv run pytest tests/ --cov=src --cov-report=term-missing
 w12d2/
 ├── src/
 │   ├── __init__.py
-│   ├── main.py           # FastAPI application
-│   ├── config.py         # Settings and configuration
-│   ├── database.py       # SQLAlchemy setup
-│   ├── models.py         # ORM models (User, Listing)
-│   ├── schemas.py        # Pydantic schemas
-│   ├── auth.py           # JWT authentication
-│   ├── exceptions.py     # Custom exceptions
-│   ├── middleware.py     # Request ID, logging
-│   ├── rate_limit.py     # Redis rate limiting
-│   ├── health.py         # Health check endpoints
-│   └── routers/
-│       ├── auth.py       # Auth endpoints
-│       ├── users.py      # User CRUD
-│       ├── listings.py   # Listing CRUD
-│       └── external.py   # Async/background tasks demo
+│   ├── main.py
+│   ├── api/
+│   │   └── routers/
+│   │       ├── auth.py
+│   │       ├── users.py
+│   │       ├── listings.py
+│   │       ├── health.py
+│   │       └── external.py
+│   ├── core/
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   └── exceptions.py
+│   ├── middleware/
+│   │   └── middleware.py
+│   ├── models/
+│   │   └── models.py
+│   ├── schemas/
+│   │   └── schemas.py
+│   └── services/
+│       ├── auth.py
+│       ├── cache.py
+│       └── rate_limit.py
 ├── tests/
 │   ├── conftest.py       # Pytest fixtures
 │   ├── test_auth.py

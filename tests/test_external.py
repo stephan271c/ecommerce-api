@@ -20,7 +20,7 @@ class TestRandomUserEndpoint:
         assert "source" in data
         assert data["source"] == "randomuser.me"
 
-    @patch('src.routers.external.fetch_random_user')
+    @patch('src.api.routers.external.fetch_random_user')
     def test_random_user_success_mocked(self, mock_fetch, client):
         """Test random user endpoint with mocked external call."""
         mock_fetch.return_value = {
@@ -33,7 +33,7 @@ class TestRandomUserEndpoint:
         data = response.json()
         assert data["source"] == "randomuser.me"
 
-    @patch('src.routers.external.fetch_random_user')
+    @patch('src.api.routers.external.fetch_random_user')
     def test_random_user_handles_error(self, mock_fetch, client):
         """Test random user endpoint handles external API errors."""
         import httpx
@@ -78,7 +78,7 @@ class TestExternalSchemas:
 
     def test_external_api_response_schema(self):
         """Test ExternalAPIResponse schema validation."""
-        from src.routers.external import ExternalAPIResponse
+        from src.api.routers.external import ExternalAPIResponse
         
         response = ExternalAPIResponse(
             source="test",
@@ -92,7 +92,7 @@ class TestExternalSchemas:
 
     def test_background_task_status_schema(self):
         """Test BackgroundTaskStatus schema validation."""
-        from src.routers.external import BackgroundTaskStatus
+        from src.api.routers.external import BackgroundTaskStatus
         
         status = BackgroundTaskStatus(
             message="Task completed",
@@ -109,7 +109,7 @@ class TestFetchRandomUser:
     @pytest.mark.asyncio
     async def test_fetch_random_user_function(self):
         """Test fetch_random_user function directly."""
-        from src.routers.external import fetch_random_user
+        from src.api.routers.external import fetch_random_user
         
         with patch('httpx.AsyncClient') as mock_client:
             mock_response = MagicMock()
