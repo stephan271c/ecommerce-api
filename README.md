@@ -4,6 +4,7 @@ Production-ready RESTful API for an e-commerce platform built with FastAPI.
 
 ## Features
 
+- **Web Frontend**: Jinja2 template-based UI for browsing and managing the platform
 - **User Management**: Registration, authentication, profile management
 - **Listings**: Create and manage product listings with filtering and sorting
 - **JWT Authentication**: Secure token-based authentication with role-based access control
@@ -35,6 +36,22 @@ uv run uvicorn src.main:app --reload
 Once running, access the interactive API docs at:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+### Web Frontend
+
+A lightweight Jinja2-based frontend is available at http://localhost:8000/
+
+| Route | Description |
+|-------|-------------|
+| `/` | Home page with platform overview |
+| `/login` | User login form |
+| `/register` | New user registration |
+| `/listings` | Browse listings with filters |
+| `/listings/new` | Create new listing (auth required) |
+| `/listings/{id}` | View listing details |
+| `/listings/{id}/edit` | Edit listing (owner only) |
+| `/profile` | User profile page (auth required) |
+| `/users` | Users list (auth required) |
 
 ## API Endpoints
 
@@ -108,7 +125,8 @@ w12d2/
 │   │       ├── users.py
 │   │       ├── listings.py
 │   │       ├── health.py
-│   │       └── external.py
+│   │       ├── external.py
+│   │       └── frontend.py      # Jinja2 template routes
 │   ├── core/
 │   │   ├── config.py
 │   │   ├── database.py
@@ -119,12 +137,30 @@ w12d2/
 │   │   └── models.py
 │   ├── schemas/
 │   │   └── schemas.py
-│   └── services/
-│       ├── auth.py
-│       ├── cache.py
-│       └── rate_limit.py
+│   ├── services/
+│   │   ├── auth.py
+│   │   ├── cache.py
+│   │   └── rate_limit.py
+│   ├── static/                   # Frontend assets
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── main.js
+│   └── templates/                # Jinja2 templates
+│       ├── base.html
+│       ├── index.html
+│       ├── auth/
+│       │   ├── login.html
+│       │   └── register.html
+│       ├── listings/
+│       │   ├── list.html
+│       │   ├── detail.html
+│       │   └── form.html
+│       └── users/
+│           ├── profile.html
+│           └── list.html
 ├── tests/
-│   ├── conftest.py       # Pytest fixtures
+│   ├── conftest.py               # Pytest fixtures
 │   ├── test_auth.py
 │   ├── test_users.py
 │   ├── test_listings.py

@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div id="profile-content">
+  <div class="text-center" style="padding: 3rem;">
+    <div class="spinner" style="margin: 0 auto;"></div>
+    <p class="mt-1 text-muted">Loading profile...</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!TokenManager.isAuthenticated()) {
+      showFlash('Please login to view your profile', 'warning');
+      setTimeout(() => window.location.href = '/login', 1500);
+      return;
+    }
+    loadProfile();
+  });
+
+  async function loadProfile() {
+    const container = document.getElementById('profile-content');
+
+    try {
+      const user = await API.get('/v1/users/me');
+      TokenManager.setUser(user); // Update stored user data
+
+      container.innerHTML = `
+            <div class="profile-header">
+                <div class="profile-avatar">${user.username.charAt(0).toUpperCase()}</div>
+                <div class="profile-info">
+                    <h1>${escapeHtml(user.username)}</h1>
+                    <p>${escapeHtml(user.email)}</p>
+                    <span class="badge ${user.role === 'admin' ? 'badge-info' : 'badge-success'}">${user.role}</span>
+                    ${user.is_active ? '' : '<span class="badge badge-warning ml-1">Inactive</span>'}
+                </div>
+            </div>
+            
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>Account Details</h3>
+                    <table class="table">
+                        <tr>
+                            <td class="text-muted">User ID</td>
+                            <td>${user.id}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Username</td>
+                            <td>${escapeHtml(user.username)}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Email</td>
+                            <td>${escapeHtml(user.email)}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Role</td>
+                            <td>${user.role}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Status</td>
+                            <td>${user.is_active ? '<span class="text-success">Active</span>' : '<span class="text-error">Inactive</span>'}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Joined</td>
+                            <td>${formatDate(user.created_at)}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="card">
+                    <h3>Update Profile</h3>
+                    <form onsubmit="handleUpdateProfile(event)" data-user-id="${user.id}">
+                        <div class="form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                class="form-control" 
+                                value="${escapeHtml(user.username)}"
+                                minlength="3"
+                                maxlength="100"
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-control" 
+                                value="${escapeHtml(user.email)}"
+                            >
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-2">
+                <div class="d-flex justify-between align-center">
+                    <div>
+                        <h3 style="margin-bottom: 0.25rem;">My Listings</h3>
+                        <p class="text-muted" style="margin-bottom: 0;">Products you've listed for sale</p>
+                    </div>
+                    <a href="/listings/new" class="btn btn-primary btn-sm">+ New Listing</a>
+                </div>
+                <div id="my-listings" class="mt-2">
+                    <div class="spinner" style="margin: 1rem auto;"></div>
+                </div>
+            </div>
+        `;
+
+      // Load user's listings
+      loadMyListings(user.id);
+
+    } catch (error) {
+      container.innerHTML = `
+            <div class="alert alert-error">
+                Failed to load profile. Please try again.
+            </div>
+        `;
+    }
+  }
+
+  async function loadMyListings(userId) {
+    const container = document.getElementById('my-listings');
+
+    try {
+      const data = await API.get(`/v1/listings?seller_id=${userId}&limit=10`);
+
+      if (data.items.length === 0) {
+        container.innerHTML = `
+                <p class="text-muted text-center">You haven't created any listings yet.</p>
+            `;
+        return;
+      }
+
+      container.innerHTML = `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(listing => `
+                            <tr>
+                                <td><a href="/listings/${listing.id}">${escapeHtml(listing.title)}</a></td>
+                                <td>${listing.category || '-'}</td>
+                                <td>$${listing.price.toFixed(2)}</td>
+                                <td>${listing.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>'}</td>
+                                <td>
+                                    <a href="/listings/${listing.id}/edit" class="btn btn-secondary btn-sm">Edit</a>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${data.total > 10 ? `<p class="text-muted text-center mt-1">Showing 10 of ${data.total} listings</p>` : ''}
+        `;
+
+    } catch (error) {
+      container.innerHTML = `<p class="text-error">Failed to load listings</p>`;
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+</script>
+{% endblock %}

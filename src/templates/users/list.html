@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<h1>All Users</h1>
+<p class="text-muted mb-2">View all registered users (requires authentication)</p>
+
+<div class="card">
+  <div id="users-content">
+    <div class="text-center" style="padding: 2rem;">
+      <div class="spinner" style="margin: 0 auto;"></div>
+      <p class="mt-1 text-muted">Loading users...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentPage = 1;
+  const limit = 20;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!TokenManager.isAuthenticated()) {
+      showFlash('Please login to view users', 'warning');
+      setTimeout(() => window.location.href = '/login', 1500);
+      return;
+    }
+    loadUsers();
+  });
+
+  async function loadUsers() {
+    const container = document.getElementById('users-content');
+    const pagination = document.getElementById('pagination');
+
+    try {
+      const skip = (currentPage - 1) * limit;
+      const data = await API.get(`/v1/users?skip=${skip}&limit=${limit}`);
+
+      if (data.items.length === 0) {
+        container.innerHTML = `
+                <div class="empty-state">
+                    <p>No users found.</p>
+                </div>
+            `;
+        return;
+      }
+
+      container.innerHTML = `
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${escapeHtml(user.username)}</td>
+                                <td>${escapeHtml(user.email)}</td>
+                                <td>
+                                    <span class="badge ${user.role === 'admin' ? 'badge-info' : 'badge-success'}">
+                                        ${user.role}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${user.is_active
+          ? '<span class="text-success">Active</span>'
+          : '<span class="text-error">Inactive</span>'}
+                                </td>
+                                <td>${formatDate(user.created_at)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+      // Render pagination
+      const totalPages = Math.ceil(data.total / limit);
+      if (totalPages > 1) {
+        let paginationHtml = '';
+
+        if (currentPage > 1) {
+          paginationHtml += `<a href="#" onclick="goToPage(${currentPage - 1}); return false;">&laquo; Prev</a>`;
+        }
+
+        for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+          if (i === currentPage) {
+            paginationHtml += `<span class="active">${i}</span>`;
+          } else {
+            paginationHtml += `<a href="#" onclick="goToPage(${i}); return false;">${i}</a>`;
+          }
+        }
+
+        if (currentPage < totalPages) {
+          paginationHtml += `<a href="#" onclick="goToPage(${currentPage + 1}); return false;">Next &raquo;</a>`;
+        }
+
+        pagination.innerHTML = paginationHtml;
+      } else {
+        pagination.innerHTML = '';
+      }
+
+    } catch (error) {
+      if (error.status === 401) {
+        container.innerHTML = `
+                <div class="alert alert-warning">
+                    Please login to view users.
+                </div>
+            `;
+      } else {
+        container.innerHTML = `
+                <div class="alert alert-error">
+                    Failed to load users. Please try again.
+                </div>
+            `;
+      }
+    }
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    loadUsers();
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+</script>
+{% endblock %}

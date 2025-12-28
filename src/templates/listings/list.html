@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Listings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-between align-center mb-2">
+  <h1>Product Listings</h1>
+  <a href="/listings/new" class="btn btn-primary" id="create-btn" style="display: none;">
+    + New Listing
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="filters">
+  <form id="filter-form" class="filters-row">
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select name="category" class="form-control" onchange="applyFilters()">
+        <option value="">All Categories</option>
+        <option value="electronics">Electronics</option>
+        <option value="clothing">Clothing</option>
+        <option value="home">Home & Garden</option>
+        <option value="books">Books</option>
+        <option value="sports">Sports</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Min Price</label>
+      <input type="number" name="min_price" class="form-control" placeholder="0" min="0" step="0.01"
+        onchange="applyFilters()">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Max Price</label>
+      <input type="number" name="max_price" class="form-control" placeholder="Any" min="0" step="0.01"
+        onchange="applyFilters()">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Sort By</label>
+      <select name="sort_by" class="form-control" onchange="applyFilters()">
+        <option value="created_at">Newest</option>
+        <option value="price">Price</option>
+        <option value="title">Title</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Order</label>
+      <select name="sort_order" class="form-control" onchange="applyFilters()">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+    </div>
+  </form>
+</div>
+
+<!-- Listings Grid -->
+<div class="grid grid-3" id="listings-grid">
+  <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
+    <div class="spinner" style="margin: 0 auto;"></div>
+    <p class="mt-1 text-muted">Loading listings...</p>
+  </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentPage = 1;
+  const limit = 9;
+
+  // Show create button if authenticated
+  document.addEventListener('DOMContentLoaded', () => {
+    if (TokenManager.isAuthenticated()) {
+      document.getElementById('create-btn').style.display = 'inline-flex';
+    }
+    loadListings();
+  });
+
+  function applyFilters() {
+    currentPage = 1;
+    loadListings();
+  }
+
+  async function loadListings() {
+    const grid = document.getElementById('listings-grid');
+    const pagination = document.getElementById('pagination');
+    const form = document.getElementById('filter-form');
+
+    // Build query params
+    const params = new URLSearchParams();
+    params.append('skip', (currentPage - 1) * limit);
+    params.append('limit', limit);
+
+    if (form.category.value) params.append('category', form.category.value);
+    if (form.min_price.value) params.append('min_price', form.min_price.value);
+    if (form.max_price.value) params.append('max_price', form.max_price.value);
+    if (form.sort_by.value) params.append('sort_by', form.sort_by.value);
+    if (form.sort_order.value) params.append('sort_order', form.sort_order.value);
+
+    try {
+      const data = await API.get(`/v1/listings?${params.toString()}`);
+
+      if (data.items.length === 0) {
+        grid.innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-state-icon">📦</div>
+                    <h3>No listings found</h3>
+                    <p>Try adjusting your filters or create the first listing!</p>
+                </div>
+            `;
+        pagination.innerHTML = '';
+        return;
+      }
+
+      // Render listings
+      grid.innerHTML = data.items.map(listing => `
+            <a href="/listings/${listing.id}" class="card listing-card" style="text-decoration: none; color: inherit;">
+                <div class="card-body">
+                    <span class="listing-category">${listing.category || 'Uncategorized'}</span>
+                    <h3 style="margin-top: 0.5rem; margin-bottom: 0.5rem;">${escapeHtml(listing.title)}</h3>
+                    <p class="text-muted" style="font-size: 0.9rem; margin-bottom: 1rem;">
+                        ${escapeHtml(truncate(listing.description || '', 100))}
+                    </p>
+                    <div class="listing-price">$${listing.price.toFixed(2)}</div>
+                </div>
+                <div class="listing-meta">
+                    <span>${listing.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>'}</span>
+                    <span>${formatDate(listing.created_at)}</span>
+                </div>
+            </a>
+        `).join('');
+
+      // Render pagination
+      const totalPages = Math.ceil(data.total / limit);
+      if (totalPages > 1) {
+        let paginationHtml = '';
+
+        if (currentPage > 1) {
+          paginationHtml += `<a href="#" onclick="goToPage(${currentPage - 1}); return false;">&laquo; Prev</a>`;
+        }
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === currentPage) {
+            paginationHtml += `<span class="active">${i}</span>`;
+          } else if (i <= 3 || i > totalPages - 2 || Math.abs(i - currentPage) <= 1) {
+            paginationHtml += `<a href="#" onclick="goToPage(${i}); return false;">${i}</a>`;
+          } else if (i === 4 || i === totalPages - 2) {
+            paginationHtml += `<span>...</span>`;
+          }
+        }
+
+        if (currentPage < totalPages) {
+          paginationHtml += `<a href="#" onclick="goToPage(${currentPage + 1}); return false;">Next &raquo;</a>`;
+        }
+
+        pagination.innerHTML = paginationHtml;
+      } else {
+        pagination.innerHTML = '';
+      }
+
+    } catch (error) {
+      grid.innerHTML = `
+            <div class="alert alert-error" style="grid-column: 1 / -1;">
+                Failed to load listings. Please try again.
+            </div>
+        `;
+    }
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    loadListings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function truncate(text, length) {
+    return text.length > length ? text.substring(0, length) + '...' : text;
+  }
+
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+</script>
+{% endblock %}

@@ -9,10 +9,12 @@ Production-ready RESTful API with:
 - CORS support
 """
 
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from .core.config import get_settings
 from .core.database import init_db
@@ -21,7 +23,7 @@ from .services.rate_limit import rate_limit_dependency, add_rate_limit_headers
 from .core.exceptions import APIException
 
 # Import routers
-from .api.routers import auth, users, listings, external
+from .api.routers import auth, users, listings, external, frontend
 from .api.routers.health import router as health_router
 
 settings = get_settings()
@@ -104,24 +106,19 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Include routers
+# Mount static files
+STATIC_DIR = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+# Include API routers
 app.include_router(health_router)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(listings.router)
 app.include_router(external.router)
 
-
-# Root endpoint
-@app.get("/", tags=["Root"])
-async def root():
-    """API root endpoint."""
-    return {
-        "name": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "docs": "/docs",
-        "health": "/health"
-    }
+# Include frontend router (must be last to avoid route conflicts)
+app.include_router(frontend.router)
 
 
 # Rate limited example endpoint

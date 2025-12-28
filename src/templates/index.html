@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+{% block description %}Browse and sell products on our modern e-commerce platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+  <h1>Welcome to ShopAPI</h1>
+  <p>A modern e-commerce platform built with FastAPI. Browse listings, manage your account, and explore our RESTful API.
+  </p>
+  <div class="hero-actions">
+    <a href="/listings" class="btn btn-primary btn-lg">Browse Listings</a>
+    <a href="/docs" class="btn btn-secondary btn-lg" target="_blank">API Documentation</a>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="mt-3">
+  <div class="grid grid-3">
+    <div class="card feature-card">
+      <div class="feature-icon">🛍️</div>
+      <h3>Product Listings</h3>
+      <p>Browse, filter, and sort through available products. Create your own listings when logged in.</p>
+    </div>
+
+    <div class="card feature-card">
+      <div class="feature-icon">🔐</div>
+      <h3>Secure Authentication</h3>
+      <p>JWT-based authentication keeps your account secure. Register and login to access all features.</p>
+    </div>
+
+    <div class="card feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>Fast & Modern</h3>
+      <p>Built on FastAPI with async support, Redis caching, and rate limiting for optimal performance.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Stats (loaded from API) -->
+<section class="mt-3">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Platform Overview</h3>
+    </div>
+    <div class="grid grid-4" id="stats-grid">
+      <div class="text-center">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);" id="stat-listings">-</div>
+        <div class="text-muted">Active Listings</div>
+      </div>
+      <div class="text-center">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);">✓</div>
+        <div class="text-muted">API Status</div>
+      </div>
+      <div class="text-center">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);">v1</div>
+        <div class="text-muted">API Version</div>
+      </div>
+      <div class="text-center">
+        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);">🚀</div>
+        <div class="text-muted">FastAPI Powered</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- API Endpoints Overview -->
+<section class="mt-3">
+  <h2>Available Endpoints</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h4>🔑 Authentication</h4>
+      <ul style="list-style: none; color: var(--text-secondary);">
+        <li><code>POST /v1/auth/register</code> - Create new account</li>
+        <li><code>POST /v1/auth/login</code> - Get access token</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>👤 Users</h4>
+      <ul style="list-style: none; color: var(--text-secondary);">
+        <li><code>GET /v1/users</code> - List users</li>
+        <li><code>GET /v1/users/me</code> - Current user profile</li>
+        <li><code>PUT /v1/users/{id}</code> - Update user</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>📦 Listings</h4>
+      <ul style="list-style: none; color: var(--text-secondary);">
+        <li><code>GET /v1/listings</code> - Browse listings</li>
+        <li><code>POST /v1/listings</code> - Create listing</li>
+        <li><code>GET /v1/listings/{id}</code> - Get listing details</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>❤️ Health</h4>
+      <ul style="list-style: none; color: var(--text-secondary);">
+        <li><code>GET /health</code> - Health check</li>
+        <li><code>GET /health/ready</code> - Readiness check</li>
+        <li><code>GET /health/live</code> - Liveness check</li>
+      </ul>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Load listing count on page load
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const data = await API.get('/v1/listings?limit=1');
+      document.getElementById('stat-listings').textContent = data.total || 0;
+    } catch (e) {
+      document.getElementById('stat-listings').textContent = '?';
+    }
+  });
+</script>
+{% endblock %}
