@@ -5,6 +5,7 @@ External API router demonstrating async HTTP calls.
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends
 from ...services.rate_limit import RateLimiter
+from ...services.auth import get_current_user
 from pydantic import BaseModel
 from typing import Optional
 
@@ -56,7 +57,7 @@ def process_in_background(task_id: str, data: str):
     "/random-user",
     response_model=ExternalAPIResponse,
     summary="Fetch random user from external API",
-    dependencies=[Depends(RateLimiter(requests=5, window=60))]
+    dependencies=[Depends(get_current_user), Depends(RateLimiter(requests=5, window=60))]
 )
 async def get_random_user():
     """

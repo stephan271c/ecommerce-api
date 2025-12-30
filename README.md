@@ -90,7 +90,8 @@ A lightweight Jinja2-based frontend is available at http://localhost:8000/
 ### External
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/v1/external/random-user` | Fetch random user from external API (Rate limited) |
+| GET | `/v1/external/random-user` | Fetch random user from external API (Rate limited: 5 req/60s) |
+| POST | `/v1/external/background-task` | Start a background task (returns task ID) |
 
 ## Configuration
 
@@ -156,6 +157,7 @@ w12d2/
 │   └── templates/                # Jinja2 templates
 │       ├── base.html
 │       ├── index.html
+│       ├── random_user.html
 │       ├── auth/
 │       │   ├── login.html
 │       │   └── register.html
@@ -171,7 +173,10 @@ w12d2/
 │   ├── test_auth.py
 │   ├── test_users.py
 │   ├── test_listings.py
-│   └── test_health.py
+│   ├── test_health.py
+│   ├── test_external.py          # External API and background tasks
+│   ├── test_cache.py             # Caching functionality
+│   └── test_rate_limit.py        # Rate limiting tests
 ├── Dockerfile
 ├── docker-compose.yml
 ├── pyproject.toml

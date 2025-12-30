@@ -25,9 +25,16 @@
       <p>Click the button below to fetch a random user.</p>
     </div>
 
-    <button id="fetch-user-btn" class="btn btn-primary btn-lg">
+    <!-- Button for authenticated users -->
+    <button id="fetch-user-btn" class="btn btn-primary btn-lg" style="display: none;">
       Get Random User
     </button>
+
+    <!-- Message for unauthenticated users -->
+    <div id="sign-in-prompt" style="display: none;">
+      <p style="color: var(--text-muted); margin-bottom: 1rem;">Please sign in to use this feature.</p>
+      <a href="/login" class="btn btn-primary btn-lg">Sign In</a>
+    </div>
   </div>
 </div>
 
@@ -42,6 +49,7 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const fetchBtn = document.getElementById('fetch-user-btn');
+    const signInPrompt = document.getElementById('sign-in-prompt');
     const userDisplay = document.getElementById('user-display');
     const initialState = document.getElementById('initial-state');
     const imgEl = document.getElementById('user-image');
@@ -49,49 +57,59 @@
     const emailEl = document.getElementById('user-email');
     const locationEl = document.getElementById('user-location');
 
-    fetchBtn.addEventListener('click', async () => {
-      const originalText = fetchBtn.textContent;
-      fetchBtn.disabled = true;
-      fetchBtn.textContent = 'Fetching...';
+    // Check authentication and show appropriate UI
+    if (window.TokenManager && window.TokenManager.isAuthenticated()) {
+      fetchBtn.style.display = 'inline-block';
+      signInPrompt.style.display = 'none';
 
-      try {
-        // Use the API helper from main.js
-        const response = await API.get('/v1/external/random-user');
-        const userData = response.data.results[0];
+      fetchBtn.addEventListener('click', async () => {
+        const originalText = fetchBtn.textContent;
+        fetchBtn.disabled = true;
+        fetchBtn.textContent = 'Fetching...';
 
-        // Update UI
-        imgEl.src = userData.picture.large;
-        nameEl.textContent = `${userData.name.first} ${userData.name.last}`;
-        emailEl.textContent = userData.email;
-        locationEl.textContent = `${userData.location.city}, ${userData.location.country}`;
+        try {
+          // Use the API helper from main.js
+          const response = await API.get('/v1/external/random-user');
+          const userData = response.data.results[0];
 
-        // Show display, hide initial state
-        initialState.style.display = 'none';
-        userDisplay.style.display = 'block';
+          // Update UI
+          imgEl.src = userData.picture.large;
+          nameEl.textContent = `${userData.name.first} ${userData.name.last}`;
+          emailEl.textContent = userData.email;
+          locationEl.textContent = `${userData.location.city}, ${userData.location.country}`;
 
-      } catch (error) {
-        console.error('Error fetching user:', error);
+          // Show display, hide initial state
+          initialState.style.display = 'none';
+          userDisplay.style.display = 'block';
 
-        if (error.status === 429) {
-          // Extract retry_after from details if available
-          const details = error.data?.detail?.details; // Adjusted based on exceptions.py structure
-          const retryAfter = details?.retry_after;
+        } catch (error) {
+          console.error('Error fetching user:', error);
 
-          let msg = 'Rate limit reached.';
-          if (retryAfter) {
-            msg += ` Please wait ${retryAfter} seconds.`;
-          } else {
-            msg += ' Please try again later.';
+          if (error.status === 429) {
+            // Extract retry_after from details if available
+            const details = error.data?.detail?.details; // Adjusted based on exceptions.py structure
+            const retryAfter = details?.retry_after;
+
+            let msg = 'Rate limit reached.';
+            if (retryAfter) {
+              msg += ` Please wait ${retryAfter} seconds.`;
+            } else {
+              msg += ' Please try again later.';
+            }
+
+            window.showFlash(msg, 'error');
           }
-
-          window.showFlash(msg, 'error');
+          // Other errors might be handled by global handlers or ignored here
+        } finally {
+          fetchBtn.disabled = false;
+          fetchBtn.textContent = originalText;
         }
-        // Other errors might be handled by global handlers or ignored here
-      } finally {
-        fetchBtn.disabled = false;
-        fetchBtn.textContent = originalText;
-      }
-    });
+      });
+    } else {
+      // Not authenticated - show sign in prompt
+      fetchBtn.style.display = 'none';
+      signInPrompt.style.display = 'block';
+    }
   });
 </script>
 {% endblock %}
