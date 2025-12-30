@@ -93,3 +93,12 @@ async def users_page(request: Request):
         "users/list.html",
         {"request": request, "active_page": "users"}
     )
+
+
+@router.get("/random-user", response_class=HTMLResponse)
+async def random_user_page(request: Request):
+    """Random user demonstration page."""
+    return templates.TemplateResponse(
+        "random_user.html",
+        {"request": request, "active_page": "random_user"}
+    )

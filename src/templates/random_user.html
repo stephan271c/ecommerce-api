@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Random User{% endblock %}
+{% block description %}Get a random user from our external API.{% endblock %}
+
+{% block content %}
+<div class="header-section">
+  <h1>Random User Generator</h1>
+  <p>Demonstrating external API integration with FastAPI and Background Tasks.</p>
+</div>
+
+<!-- Main Interaction Area -->
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+  <div style="text-align: center; padding: 2rem;">
+    <div id="user-display" style="display: none; margin-bottom: 2rem;">
+      <img id="user-image" src="" alt="Random User"
+        style="width: 150px; height: 150px; border-radius: 50%; border: 4px solid var(--primary-color); margin-bottom: 1rem; object-fit: cover;">
+      <h2 id="user-name" style="margin-bottom: 0.5rem;"></h2>
+      <p id="user-email" style="color: var(--text-muted); margin-bottom: 0.5rem;"></p>
+      <p id="user-location" style="font-size: 0.9rem;"></p>
+    </div>
+
+    <div id="initial-state" style="margin-bottom: 2rem; color: var(--text-muted);">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">👤</div>
+      <p>Click the button below to fetch a random user.</p>
+    </div>
+
+    <button id="fetch-user-btn" class="btn btn-primary btn-lg">
+      Get Random User
+    </button>
+  </div>
+</div>
+
+<div style="margin-top: 2rem; text-align: center;">
+  <p style="color: var(--text-muted); font-size: 0.9rem;">
+    Data provided by <a href="https://randomuser.me" target="_blank">randomuser.me</a> via our backend proxy.
+  </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const fetchBtn = document.getElementById('fetch-user-btn');
+    const userDisplay = document.getElementById('user-display');
+    const initialState = document.getElementById('initial-state');
+    const imgEl = document.getElementById('user-image');
+    const nameEl = document.getElementById('user-name');
+    const emailEl = document.getElementById('user-email');
+    const locationEl = document.getElementById('user-location');
+
+    fetchBtn.addEventListener('click', async () => {
+      const originalText = fetchBtn.textContent;
+      fetchBtn.disabled = true;
+      fetchBtn.textContent = 'Fetching...';
+
+      try {
+        // Use the API helper from main.js
+        const response = await API.get('/v1/external/random-user');
+        const userData = response.data.results[0];
+
+        // Update UI
+        imgEl.src = userData.picture.large;
+        nameEl.textContent = `${userData.name.first} ${userData.name.last}`;
+        emailEl.textContent = userData.email;
+        locationEl.textContent = `${userData.location.city}, ${userData.location.country}`;
+
+        // Show display, hide initial state
+        initialState.style.display = 'none';
+        userDisplay.style.display = 'block';
+
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        // Flash message is already handled by API.get() for network errors,
+        // but we can add specific user feedback here if needed
+      } finally {
+        fetchBtn.disabled = false;
+        fetchBtn.textContent = originalText;
+      }
+    });
+  });
+</script>
+{% endblock %}
