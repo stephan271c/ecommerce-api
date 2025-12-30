@@ -21,8 +21,14 @@ if settings.DATABASE_URL.startswith("sqlite"):
     )
 else:
     # PostgreSQL or other databases
+    # Convert connection string for psycopg v3 compatibility
+    # Railway injects postgresql:// but psycopg3 requires postgresql+psycopg://
+    connection_string = str(settings.DATABASE_URL)
+    if connection_string.startswith("postgresql://"):
+        connection_string = connection_string.replace("postgresql://", "postgresql+psycopg://", 1)
+    
     engine = create_engine(
-        settings.DATABASE_URL,
+        connection_string,
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10,
