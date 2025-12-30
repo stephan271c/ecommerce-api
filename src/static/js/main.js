@@ -464,4 +464,5 @@
   window.handleLogout = handleLogout;
   window.TokenManager = TokenManager;
   window.API = API;
+  window.showFlash = showFlash;
 })();

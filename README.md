@@ -52,6 +52,7 @@ A lightweight Jinja2-based frontend is available at http://localhost:8000/
 | `/listings/{id}/edit` | Edit listing (owner only) |
 | `/profile` | User profile page (auth required) |
 | `/users` | Users list (auth required) |
+| `/random-user` | Random User Generator (External API demo) |
 
 ## API Endpoints
 
@@ -85,6 +86,11 @@ A lightweight Jinja2-based frontend is available at http://localhost:8000/
 |--------|----------|-------------|
 | GET | `/health` | Basic health check |
 | GET | `/health/detailed` | Detailed status with dependencies |
+
+### External
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/external/random-user` | Fetch random user from external API (Rate limited) |
 
 ## Configuration
 
