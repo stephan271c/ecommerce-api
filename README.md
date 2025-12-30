@@ -22,7 +22,7 @@ Production-ready RESTful API for an e-commerce platform built with FastAPI.
 
 ```bash
 # Clone and navigate to project
-cd w12d2
+cd ecommerce-api
 
 # Install dependencies
 uv sync
