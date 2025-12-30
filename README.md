@@ -7,7 +7,7 @@ Production-ready RESTful API for an e-commerce platform built with FastAPI.
 - **Web Frontend**: Jinja2 template-based UI for browsing and managing the platform
 - **User Management**: Registration, authentication, profile management
 - **Listings**: Create and manage product listings with filtering and sorting
-- **JWT Authentication**: Secure token-based authentication with role-based access control
+- **JWT Authentication**: Secure token-based authentication with role-based access control (RBAC) - `user` and `admin` roles
 - **Rate Limiting**: Redis-based sliding window rate limiting (with in-memory fallback)
 - **Health Checks**: Load balancer integration endpoints
 
@@ -64,11 +64,12 @@ A lightweight Jinja2-based frontend is available at http://localhost:8000/
 ### Users
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/v1/users` | List users (paginated) |
+| GET | `/v1/users` | List users (Admin only) |
 | GET | `/v1/users/me` | Get current user profile |
-| GET | `/v1/users/{id}` | Get user by ID |
-| PUT | `/v1/users/{id}` | Update user |
-| DELETE | `/v1/users/{id}` | Delete user |
+| GET | `/v1/users/{id}` | Get user by ID (Self or Admin only) |
+| PUT | `/v1/users/{id}` | Update user (Self or Admin only) |
+| PUT | `/v1/users/{id}/role` | Update user role (Admin only) |
+| DELETE | `/v1/users/{id}` | Delete user (Self or Admin only) |
 
 ### Listings
 | Method | Endpoint | Description |

@@ -136,24 +136,40 @@ def _memory_rate_limit(
     return is_allowed, remaining, limit, reset_time
 
 
-async def rate_limit_dependency(request: Request) -> None:
+class RateLimiter:
     """
-    FastAPI dependency for rate limiting.
-    
-    Raises RateLimitError if limit exceeded.
-    Adds rate limit headers to response.
+    Rate limiter dependency that can be configured per-endpoint.
     """
-    client_id = get_client_identifier(request)
-    is_allowed, remaining, limit, reset_time = sliding_window_rate_limit(client_id)
-    
-    # Store for response headers (will be added by middleware or route)
-    request.state.rate_limit_remaining = remaining
-    request.state.rate_limit_limit = limit
-    request.state.rate_limit_reset = reset_time
-    
-    if not is_allowed:
-        retry_after = reset_time - int(time.time())
-        raise RateLimitError(retry_after=retry_after)
+    def __init__(self, requests: int = None, window: int = None):
+        self.requests = requests
+        self.window = window
+
+    async def __call__(self, request: Request) -> None:
+        """
+        FastAPI dependency for rate limiting.
+        
+        Raises RateLimitError if limit exceeded.
+        Adds rate limit headers to response.
+        """
+        client_id = get_client_identifier(request)
+        is_allowed, remaining, limit, reset_time = sliding_window_rate_limit(
+            client_id,
+            limit=self.requests,
+            window_seconds=self.window
+        )
+        
+        # Store for response headers (will be added by middleware or route)
+        request.state.rate_limit_remaining = remaining
+        request.state.rate_limit_limit = limit
+        request.state.rate_limit_reset = reset_time
+        
+        if not is_allowed:
+            retry_after = reset_time - int(time.time())
+            raise RateLimitError(retry_after=retry_after)
+
+
+# Default rate limiter using global settings
+rate_limit_dependency = RateLimiter()
 
 
 def add_rate_limit_headers(response: Response, request: Request) -> Response:

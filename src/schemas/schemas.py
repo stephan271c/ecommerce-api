@@ -7,7 +7,9 @@ Schemas handle data validation, serialization, and documentation.
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 import re
+from ..models.models import UserRole
 
 
 # ============== User Schemas ==============
@@ -40,6 +42,11 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = Field(None, min_length=3, max_length=100)
     is_active: Optional[bool] = None
+
+
+class UserRoleUpdate(BaseModel):
+    """Schema for administrative role updates."""
+    role: UserRole
 
 
 class UserResponse(UserBase):

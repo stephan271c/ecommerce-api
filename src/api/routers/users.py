@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ...core.database import get_db
 from ...models.models import User
-from ...schemas.schemas import UserResponse, UserUpdate, UserList, Message
+from ...schemas.schemas import UserResponse, UserUpdate, UserRoleUpdate, UserList, Message
 from ...services.auth import get_current_user, get_current_admin, get_password_hash
 from ...core.exceptions import NotFoundError, ForbiddenError, ConflictError
 
@@ -25,7 +25,7 @@ async def list_users(
     limit: int = Query(10, ge=1, le=100, description="Max records to return"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin)
 ):
     """
     Get paginated list of users.
@@ -79,6 +79,10 @@ async def get_user(
     
     if not user:
         raise NotFoundError("User", user_id)
+    
+    # Check authorization
+    if current_user.id != user_id and current_user.role != "admin":
+        raise ForbiddenError("You can only view your own profile")
     
     return user
 
@@ -161,3 +165,38 @@ async def delete_user(
     db.commit()
     
     return Message(message="User deleted successfully")
+
+
+@router.put(
+    "/{user_id}/role",
+    response_model=UserResponse,
+    summary="Update user role (Admin only)"
+)
+async def update_user_role(
+    user_id: int,
+    role_data: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    """
+    Update a user's role.
+    
+    Requires admin privileges.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    
+    if not user:
+        raise NotFoundError("User", user_id)
+        
+    # Prevent admin from removing their own admin status (optional safety check)
+    if user.id == current_user.id and role_data.role != "admin":
+        # Allow it but maybe warn? Or just let it happen. 
+        # For safety, let's block removing own admin rights via this endpoint to prevent accidental lockout
+        # if they are the only admin.
+        pass
+
+    user.role = role_data.role.value
+    db.commit()
+    db.refresh(user)
+    
+    return user

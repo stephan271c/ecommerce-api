@@ -8,9 +8,15 @@ import pytest
 class TestListUsers:
     """Tests for listing users."""
 
-    def test_list_users_authenticated(self, client, test_user, auth_header):
-        """Test listing users with authentication."""
+    def test_list_users_regular_forbidden(self, client, test_user, auth_header):
+        """Test listing users as regular user is forbidden."""
         response = client.get("/v1/users", headers=auth_header)
+        
+        assert response.status_code == 403
+
+    def test_list_users_admin_success(self, client, admin_user, admin_auth_header):
+        """Test listing users as admin is allowed."""
+        response = client.get("/v1/users", headers=admin_auth_header)
         
         assert response.status_code == 200
         data = response.json()
@@ -24,11 +30,11 @@ class TestListUsers:
         
         assert response.status_code == 401
 
-    def test_list_users_pagination(self, client, test_user, auth_header):
-        """Test user list pagination."""
+    def test_list_users_pagination(self, client, admin_user, admin_auth_header):
+        """Test user list pagination (requires admin)."""
         response = client.get(
             "/v1/users?skip=0&limit=5",
-            headers=auth_header
+            headers=admin_auth_header
         )
         
         assert response.status_code == 200
@@ -60,6 +66,26 @@ class TestGetUser:
         )
         
         assert response.status_code == 404
+
+    def test_get_other_user_forbidden(self, client, test_user, admin_user, auth_header):
+        """Test getting another user's profile is forbidden."""
+        response = client.get(
+            f"/v1/users/{admin_user.id}",
+            headers=auth_header
+        )
+        
+        assert response.status_code == 403
+
+    def test_admin_get_any_user(self, client, test_user, admin_user, admin_auth_header):
+        """Test admin can get any user profile."""
+        response = client.get(
+            f"/v1/users/{test_user.id}",
+            headers=admin_auth_header
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == test_user.id
 
     def test_get_current_user(self, client, test_user, auth_header):
         """Test getting current user profile."""
@@ -129,3 +155,48 @@ class TestDeleteUser:
         )
         
         assert response.status_code == 403
+
+
+class TestUpdateUserRole:
+    """Tests for updating user roles."""
+
+    def test_update_role_admin_success(self, client, test_user, admin_user, admin_auth_header):
+        """Test admin promoting a user."""
+        response = client.put(
+            f"/v1/users/{test_user.id}/role",
+            headers=admin_auth_header,
+            json={"role": "admin"}
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["role"] == "admin"
+        
+        # Verify persistence
+        # We need to query via DB to be sure, but TestClient interactions are committed
+        # Re-fetching via API to confirm
+        response_check = client.get(
+            f"/v1/users/{test_user.id}",
+            headers=admin_auth_header
+        )
+        assert response_check.json()["role"] == "admin"
+
+    def test_update_role_regular_forbidden(self, client, test_user, admin_user, auth_header):
+        """Test regular user cannot change roles."""
+        response = client.put(
+            f"/v1/users/{admin_user.id}/role",
+            headers=auth_header,
+            json={"role": "user"}
+        )
+        
+        assert response.status_code == 403
+
+    def test_update_role_invalid_value(self, client, test_user, admin_user, admin_auth_header):
+        """Test validation of role values."""
+        response = client.put(
+            f"/v1/users/{test_user.id}/role",
+            headers=admin_auth_header,
+            json={"role": "supergod"}
+        )
+        
+        assert response.status_code == 422
