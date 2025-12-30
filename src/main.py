@@ -152,3 +152,7 @@ async def rate_limited_endpoint(
         raise RateLimitError(retry_after=reset_time - int(__import__('time').time()))
     
     return response_data
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

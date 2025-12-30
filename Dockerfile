@@ -25,4 +25,4 @@ ENV PORT=8000
 # ... previous lines ...
 
 # Run the application using shell execution to ensure $PORT expands
-CMD ["/bin/sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["python", "-m", "src.main"]
