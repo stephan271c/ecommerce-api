@@ -110,6 +110,48 @@ REDIS_URL=redis://localhost:6379
 docker compose up --build
 ```
 
+## Railway Deployment
+
+Deploy to [Railway](https://railway.app) with these steps:
+
+### 1. Create a New Project
+
+1. Connect your GitHub repository to Railway
+2. Railway will auto-detect the `Dockerfile` and `railway.json`
+
+### 2. Add Required Services
+
+Add these plugins from the Railway dashboard:
+- **PostgreSQL** - For production database
+- **Redis** - For rate limiting (optional, app falls back to in-memory)
+
+### 3. Configure Environment Variables
+
+In your Railway service's **Variables** section, add:
+
+| Variable | Value | Notes |
+|----------|-------|-------|
+| `DATABASE_URL` | Auto-filled by PostgreSQL plugin | Or set manually |
+| `SECRET_KEY` | Generate with `openssl rand -hex 32` | **Required for production** |
+| `REDIS_URL` | Auto-filled by Redis plugin | Optional |
+| `JWT_ALGORITHM` | `HS256` | Default works fine |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | Adjust as needed |
+| `RATE_LIMIT_REQUESTS` | `100` | Requests per window |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` | Window duration |
+| `APP_NAME` | `E-Commerce API` | Optional |
+| `DEBUG` | `False` | **Keep False in production** |
+
+> **Note**: See `.env.railway.example` for a complete template.
+
+### 4. Deploy
+
+Railway auto-deploys on git push. Monitor the deployment logs in the Railway dashboard.
+
+### Health Check
+
+Railway uses `/health` for health checks (configured in `railway.json`).
+
+
 ## Testing
 
 ```bash
@@ -119,6 +161,28 @@ uv run pytest tests/ -v
 # Run with coverage
 uv run pytest tests/ --cov=src --cov-report=term-missing
 ```
+
+## Scripts
+
+Utility scripts for administrative tasks are located in the `scripts/` directory.
+
+### Create Admin User
+
+Create an admin account with elevated privileges:
+
+```bash
+# Interactive mode (recommended - password hidden)
+uv run python -m scripts.create_admin
+
+# Command-line arguments
+uv run python -m scripts.create_admin --email admin@example.com --username admin --password YourPass123
+```
+
+Password requirements:
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
 
 ## Project Structure
 
@@ -177,6 +241,8 @@ w12d2/
 │   ├── test_external.py          # External API and background tasks
 │   ├── test_cache.py             # Caching functionality
 │   └── test_rate_limit.py        # Rate limiting tests
+├── scripts/
+│   └── create_admin.py           # CLI tool to create admin users
 ├── Dockerfile
 ├── docker-compose.yml
 ├── pyproject.toml
