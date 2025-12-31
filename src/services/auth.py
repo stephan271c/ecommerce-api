@@ -144,6 +144,9 @@ async def get_current_user(
         raise UnauthorizedError("User not found")
     if not user.is_active:
         raise UnauthorizedError("User account is deactivated")
+    
+    # Store user in request state for other dependencies (e.g., rate limiter)
+    request.state.user = user
         
     return user
 

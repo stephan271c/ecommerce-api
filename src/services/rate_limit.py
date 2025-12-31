@@ -41,14 +41,20 @@ def get_redis_client() -> Optional[redis.Redis]:
     return _redis_client
 
 
-def get_client_identifier(request: Request) -> str:
+def get_client_identifier(request: Request, user_id: Optional[int] = None) -> str:
     """
     Get a unique identifier for the client.
     
-    Uses IP address as default, but could be extended to use
-    user ID for authenticated requests.
+    Uses authenticated user ID if available, otherwise falls back to IP address.
+    This ensures each user gets their own rate limit bucket, which is essential
+    for deployments behind reverse proxies (e.g., Railway, Heroku) where all
+    requests may appear to come from the same IP.
     """
-    # Try to get real IP from proxy headers
+    # Prefer user ID for authenticated requests
+    if user_id is not None:
+        return f"user:{user_id}"
+    
+    # Fall back to IP address for unauthenticated requests
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
         return forwarded_for.split(",")[0].strip()
@@ -81,7 +87,8 @@ def sliding_window_rate_limit(
     
     if redis_client:
         # Use Redis for rate limiting
-        key = f"rate_limit:{client_id}"
+        # Include limit and window in key so different rate limit configs use separate buckets
+        key = f"rate_limit:{client_id}:{limit}:{window_seconds}"
         
         try:
             # Remove old entries and count current ones
@@ -151,7 +158,12 @@ class RateLimiter:
         Raises RateLimitError if limit exceeded.
         Adds rate limit headers to response.
         """
-        client_id = get_client_identifier(request)
+        # Try to get user ID from request state (set by get_current_user dependency)
+        user_id = None
+        if hasattr(request.state, "user") and request.state.user:
+            user_id = request.state.user.id
+        
+        client_id = get_client_identifier(request, user_id=user_id)
         is_allowed, remaining, limit, reset_time = sliding_window_rate_limit(
             client_id,
             limit=self.requests,

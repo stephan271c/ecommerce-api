@@ -161,7 +161,7 @@ app.include_router(health_router)
 app.include_router(auth.router, dependencies=[Depends(rate_limit_dependency)])
 app.include_router(users.router, dependencies=[Depends(rate_limit_dependency)])
 app.include_router(listings.router, dependencies=[Depends(rate_limit_dependency)])
-app.include_router(external.router, dependencies=[Depends(rate_limit_dependency)])
+app.include_router(external.router)  # Has its own rate limiter on specific endpoints
 
 # Include frontend router (must be last to avoid route conflicts)
 app.include_router(frontend.router)
