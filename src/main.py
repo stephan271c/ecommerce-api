@@ -29,11 +29,57 @@ from .api.routers.health import router as health_router
 settings = get_settings()
 
 
+def create_initial_admin():
+    """Create initial admin user from environment variables if configured."""
+    if not all([settings.ADMIN_EMAIL, settings.ADMIN_USERNAME, settings.ADMIN_PASSWORD]):
+        return  # Not configured, skip
+    
+    from .core.database import SessionLocal
+    from .models.models import User, UserRole
+    from .services.auth import get_password_hash
+    import logging
+    
+    logger = logging.getLogger("api")
+    db = SessionLocal()
+    
+    try:
+        # Check if any admin already exists
+        existing_admin = db.query(User).filter(User.role == UserRole.ADMIN.value).first()
+        if existing_admin:
+            logger.info("Admin user already exists, skipping auto-creation")
+            return
+        
+        # Check if email/username already taken
+        existing = db.query(User).filter(
+            (User.email == settings.ADMIN_EMAIL) | (User.username == settings.ADMIN_USERNAME)
+        ).first()
+        if existing:
+            logger.warning(f"Cannot create admin: email or username already exists")
+            return
+        
+        # Create admin
+        admin = User(
+            email=settings.ADMIN_EMAIL,
+            username=settings.ADMIN_USERNAME,
+            hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
+            role=UserRole.ADMIN.value
+        )
+        db.add(admin)
+        db.commit()
+        logger.info(f"✓ Initial admin '{settings.ADMIN_USERNAME}' created successfully")
+    except Exception as e:
+        logger.error(f"Error creating initial admin: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     init_db()
+    create_initial_admin()
     yield
     # Shutdown (cleanup if needed)
 

@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     
+    # Initial Admin (optional, for deployment without CLI)
+    # Set these environment variables to auto-create an admin on startup
+    ADMIN_EMAIL: str | None = None
+    ADMIN_USERNAME: str | None = None
+    ADMIN_PASSWORD: str | None = None
+    
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
